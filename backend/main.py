@@ -175,15 +175,31 @@ def read_docx_bytes(file_bytes: bytes) -> str:
 
 # Caching and global state
 _cached_resume = None
+_cached_resume_mtime = 0
+_cached_pdf_path = None
 
 def get_cached_resume() -> Resume:
-    global _cached_resume
-    if _cached_resume is None:
-        pdf_path = Path(__file__).parent / "Thontadarya C.pdf"
-        if not pdf_path.exists():
-            raise FileNotFoundError(f"Resume PDF file not found at: {pdf_path}")
+    global _cached_resume, _cached_resume_mtime, _cached_pdf_path
+    
+    # Dynamically find the first PDF file in the backend directory
+    backend_dir = Path(__file__).parent
+    pdf_files = list(backend_dir.glob("*.pdf"))
+    if not pdf_files:
+        raise FileNotFoundError(f"No resume PDF file found in: {backend_dir}")
+        
+    pdf_path = pdf_files[0]
+    current_mtime = os.path.getmtime(pdf_path)
+    
+    # Reload if cached resume is empty, or path changes, or file is modified
+    if (_cached_resume is None or 
+        _cached_pdf_path != pdf_path or 
+        current_mtime != _cached_resume_mtime):
+        
         resume_txt = read_pdf(pdf_path)
         _cached_resume = parse_resume(resume_txt)
+        _cached_resume_mtime = current_mtime
+        _cached_pdf_path = pdf_path
+        
     return _cached_resume
 
 class MatchRequest(BaseModel):
