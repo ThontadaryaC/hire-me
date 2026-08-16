@@ -74,6 +74,137 @@ function updateProfileUI(profile) {
         phoneEl.innerHTML = `<i class="fa-solid fa-phone"></i> ${profile.phone}`;
         phoneEl.href = `tel:${profile.phone}`;
     }
+
+    // Dynamic summary text if experiences exist
+    if (profile.experience && profile.experience.length > 0 && profile.Name) {
+        const primaryRole = profile.experience[0].role || "Full-Stack Developer";
+        const primaryProjects = profile.projects && profile.projects.length > 0 
+            ? profile.projects.slice(0, 3).join(', ') 
+            : 'AI and software projects';
+        const dynamicSummary = `Motivated Computer Science Engineering candidate representing ${profile.Name}. Experienced in role as ${primaryRole} and skilled across key developments: ${primaryProjects}. Eager to contribute as a Customer Success Engineer Trainee, Associate AI Developer, or relevant technical positions.`;
+        document.getElementById('candidate-summary').textContent = dynamicSummary;
+    }
+
+    // 1. Render Skills (Categorized dynamically)
+    if (profile.skills && profile.skills.length > 0) {
+        const langTags = document.getElementById('languages-tags');
+        const toolsTags = document.getElementById('tools-tags');
+        const conceptsTags = document.getElementById('concepts-tags');
+
+        langTags.innerHTML = '';
+        toolsTags.innerHTML = '';
+        conceptsTags.innerHTML = '';
+
+        // Classification lists
+        const langKeywords = ['java', 'c', 'python', 'html', 'css', 'javascript', 'sql', 'mysql', 'bash', 'shell', 'typescript', 'c++', 'c#'];
+        const toolsKeywords = ['streamlit', 'git', 'github', 'mysql workbench', 'fastapi', 'docker', 'vs code', 'chrome extension', 'api', 'workbench', 'jupyter'];
+
+        profile.skills.forEach(skill => {
+            const skillLower = skill.toLowerCase();
+            const badge = document.createElement('span');
+            badge.classList.add('skill-badge');
+            badge.textContent = skill;
+
+            // Sort skill into dynamic tag column
+            if (langKeywords.some(keyword => skillLower.includes(keyword))) {
+                langTags.appendChild(badge);
+            } else if (toolsKeywords.some(keyword => skillLower.includes(keyword))) {
+                toolsTags.appendChild(badge);
+            } else {
+                conceptsTags.appendChild(badge);
+            }
+        });
+
+        // Add default badge if any tag list is empty
+        if (!langTags.children.length) langTags.innerHTML = '<span class="skill-badge">Programming Logic</span>';
+        if (!toolsTags.children.length) toolsTags.innerHTML = '<span class="skill-badge">Developer Tools</span>';
+        if (!conceptsTags.children.length) conceptsTags.innerHTML = '<span class="skill-badge">Problem Solving</span>';
+    }
+
+    // 2. Render Education Timeline
+    if (profile.education && profile.education.length > 0) {
+        const eduTimeline = document.getElementById('education-timeline');
+        eduTimeline.innerHTML = '';
+
+        profile.education.forEach(eduString => {
+            const item = document.createElement('div');
+            item.classList.add('timeline-item');
+
+            // Parse edu string. e.g., "Bachelor of Engineering... S.J.M. Institute of Technology (2026)"
+            const parts = eduString.split(',');
+            const title = parts[0] || 'Educational Qualification';
+            const subtitle = parts.slice(1).join(',') || 'Academic Institution';
+            
+            item.innerHTML = `
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">Academic History</div>
+                <h4 class="timeline-title">${title.trim()}</h4>
+                <p class="timeline-subtitle">${subtitle.trim()}</p>
+            `;
+            eduTimeline.appendChild(item);
+        });
+    }
+
+    // 3. Render Experiences / Projects Timeline
+    if (profile.experience && profile.experience.length > 0) {
+        const expTimeline = document.getElementById('experience-timeline');
+        expTimeline.innerHTML = '';
+
+        profile.experience.forEach(exp => {
+            const item = document.createElement('div');
+            item.classList.add('timeline-item');
+            
+            const dateText = exp.duration || 'Project Highlight';
+            const title = exp.role ? `${exp.role}` : 'Developer';
+            const subtitle = exp.companey || 'Engineering Showcase';
+            
+            // Build bullet points lists from description paragraph
+            let bulletsHTML = '';
+            if (exp.description) {
+                // Split by bullets (•) or sentences
+                const bullets = exp.description.split(/[•\n]/).filter(s => s.trim().length > 0);
+                if (bullets.length > 1) {
+                    bulletsHTML = `<ul class="timeline-details">` + 
+                        bullets.map(b => `<li>${b.trim()}</li>`).join('') + 
+                        `</ul>`;
+                } else {
+                    bulletsHTML = `<p class="timeline-subtitle" style="font-size: 0.8rem; margin-top: 4px; font-weight: normal; color: var(--text-secondary);">${exp.description}</p>`;
+                }
+            }
+
+            item.innerHTML = `
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">${dateText}</div>
+                <h4 class="timeline-title">${title}</h4>
+                <p class="timeline-subtitle" style="font-weight: 600; color: var(--primary-cyan);">${subtitle}</p>
+                ${bulletsHTML}
+            `;
+            expTimeline.appendChild(item);
+        });
+    }
+
+    // 4. Render Certifications
+    if (profile.certificates && profile.certificates.length > 0) {
+        const certsList = document.getElementById('certifications-list');
+        certsList.innerHTML = '';
+
+        profile.certificates.forEach(certString => {
+            const parts = certString.split(' – ');
+            const name = parts[0] || certString;
+            const issuer = parts[1] || 'Completed Certification';
+
+            const item = document.createElement('div');
+            item.classList.add('cert-item');
+            item.innerHTML = `
+                <i class="fa-solid fa-certificate"></i>
+                <div class="cert-info">
+                    <span class="cert-name">${name.trim()}</span>
+                    <span class="cert-meta">${issuer.trim()}</span>
+                </div>
+            `;
+            certsList.appendChild(item);
+        });
+    }
 }
 
 // 3. AI Chat Representative (Right Pane)
