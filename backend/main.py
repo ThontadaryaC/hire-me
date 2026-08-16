@@ -143,8 +143,52 @@ Parse the Follwing resume: to genrate json
 
  response=client.chat.completions.create(model=model,messages=messages,response_format=response_formate)
  raw_output=response.choices[0].message.content
- data=json.loads(raw_output)
- resume=Resume(**data)
+ 
+ try:
+     data=json.loads(raw_output)
+ except Exception as e:
+     print(f"JSON parsing error in resume parser: {e}")
+     data = {}
+     
+ try:
+     resume=Resume(**data)
+ except Exception as e:
+     print(f"Validation error in resume parser: {e}. Attempting soft recovery...")
+     
+     # Attempt soft-recovery of Experiences
+     experiences = []
+     for exp in data.get("experience", []):
+         if not isinstance(exp, dict):
+             continue
+         try:
+             exp_obj = Experience(
+                 companey=exp.get("companey") or exp.get("company"),
+                 role=exp.get("role"),
+                 duration=exp.get("duration"),
+                 description=exp.get("description"),
+                 skills_used=exp.get("skills_used") if isinstance(exp.get("skills_used"), list) else []
+             )
+             experiences.append(exp_obj)
+         except Exception:
+             continue
+             
+     try:
+         resume = Resume(
+             Name=data.get("Name") or data.get("name"),
+             email=data.get("email"),
+             phone=data.get("phone"),
+             Total_experience_years=data.get("Total_experience_years"),
+             skills=data.get("skills") if isinstance(data.get("skills"), list) else [],
+             experience=experiences,
+             education=data.get("education") if isinstance(data.get("education"), list) else [],
+             projects=data.get("projects") if isinstance(data.get("projects"), list) else [],
+             certificates=data.get("certificates") if isinstance(data.get("certificates"), list) else []
+         )
+     except Exception as inner_e:
+         print(f"Failed soft recovery of resume model: {inner_e}")
+         # Absolute barebones recovery
+         resume = Resume(Name="Candidate Profile")
+         
  return resume
 
 
