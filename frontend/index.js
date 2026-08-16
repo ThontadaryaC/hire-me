@@ -1,5 +1,8 @@
 // API Endpoint base URL
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// For local testing, it uses localhost:8000. In production, change the fallback URL below to your deployed backend.
+const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:8000'
+    : 'https://hire-me-nsxn.onrender.com'; // <-- REPLACE with your production API URL (e.g. Render/Railway)
 
 // Fallback Candidate Info (If backend is offline)
 const fallbackCandidate = {
