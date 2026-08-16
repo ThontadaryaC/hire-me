@@ -179,7 +179,7 @@ _cached_resume = None
 def get_cached_resume() -> Resume:
     global _cached_resume
     if _cached_resume is None:
-        pdf_path = Path(__file__).parent / "Thontadaraya C.pdf"
+        pdf_path = Path(__file__).parent / "Thontadarya C.pdf"
         if not pdf_path.exists():
             raise FileNotFoundError(f"Resume PDF file not found at: {pdf_path}")
         resume_txt = read_pdf(pdf_path)
