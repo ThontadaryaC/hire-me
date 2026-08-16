@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HireMe AI - Match Job Descriptions against Thontadarya C's resume and chat with his AI representation.">
+    <title>Thontadarya C | AI Candidate Matcher & Portfolio</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Light/Dark Theme">
+        <i class="fa-solid fa-sun"></i>
+    </button>
+    <div class="bg-gradient"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-layout">
+        <!-- LEFT SIDEBAR: Matcher Inputs and Results -->
+        <aside class="sidebar glass-panel" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <!-- User will provide assets/profile.jpg. Fallback styling included -->
+                    <div class="logo-image-wrapper">
+                        <img src="assets/profile.jpeg" alt="Thontadarya C Profile Logo" class="logo-img" id="logo-img-el" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+                        <div class="logo-img-fallback" id="logo-fallback" style="display: none;">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <span class="status-badge pulse"></span>
+                    </div>
+                    <h2 class="logo-text">HireMe AI</h2>
+                </div>
+                
+                <!-- COMPARE TRIGGER BUTTON: Placed below logo image -->
+                <button type="button" class="compare-btn" id="compare-btn">
+                    <i class="fa-solid fa-calculator"></i> Compare JD with Resume
+                </button>
+            </div>
+
+            <div class="sidebar-scroll-content">
+                <!-- Matcher Inputs Section -->
+                <div class="sidebar-section">
+                    <h3 class="section-title"><i class="fa-solid fa-file-arrow-up"></i> Job Requirements</h3>
+                    <p class="section-subtitle">Provide requirements via file upload or paste the text:</p>
+                    
+                    <div class="matcher-inputs">
+                        <!-- File Upload -->
+                        <div class="file-upload-box" id="file-dropzone">
+                            <input type="file" id="jd-file" accept=".pdf,.docx,.doc,.txt" style="display: none;">
+                            <label for="jd-file" class="file-label">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span class="file-instruction" id="file-name-text">Upload PDF or DOCX file</span>
+                                <span class="file-size-limit">Max size 5MB</span>
+                            </label>
+                            <button type="button" class="clear-file-btn" id="clear-file-btn" style="display: none;" title="Remove file">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Or Divider -->
+                        <div class="divider"><span>OR</span></div>
+                        
+                        <!-- Text Paste -->
+                        <div class="text-paste-box">
+                            <textarea id="jd-text" placeholder="Copy-paste the Job Description text details here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOADING STATE (Hidden by default) -->
+                <div class="sidebar-loading" id="matcher-loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Comparing JD with resume credentials...</p>
+                </div>
+
+                <!-- ERROR STATE (Hidden by default) -->
+                <div class="sidebar-error" id="matcher-error" style="display: none;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p id="matcher-error-msg">Match failed. Please check your backend connection.</p>
+                </div>
+
+                <!-- MATCH OUTPUT SECTION (Hidden by default, renders here in left sidebar) -->
+                <div class="sidebar-output" id="matcher-output" style="display: none;">
+                    <div class="output-divider"><span>MATCHING RESULTS</span></div>
+                    
+                    <!-- Circular Score Gauge -->
+                    <div class="score-card">
+                        <div class="score-circle-wrapper">
+                            <svg class="score-ring" width="130" height="130">
+                                <circle class="score-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="10" fill="transparent" r="54" cx="65" cy="65"/>
+                                <circle class="score-ring-progress" id="score-ring-progress" stroke="#00F2FE" stroke-width="10" stroke-linecap="round" fill="transparent" r="54" cx="65" cy="65" stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+                            </svg>
+                            <div class="score-value-container">
+                                <span class="score-number" id="match-score-num">0%</span>
+                                <span class="score-label">Fit Score</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verdict -->
+                    <div class="verdict-box glass-panel">
+                        <h4 class="box-title"><i class="fa-solid fa-clipboard-check"></i> Verdict</h4>
+                        <p class="box-text" id="match-verdict">Determining compatibility verdict...</p>
+                    </div>
+
+                    <!-- Strengths -->
+                    <div class="result-list-box glass-panel">
+                        <h4 class="box-title text-success"><i class="fa-regular fa-circle-check"></i> Key Strengths</h4>
+                        <ul class="result-list" id="match-strengths"></ul>
+                    </div>
+
+                    <!-- Gaps -->
+                    <div class="result-list-box glass-panel">
+                        <h4 class="box-title text-warning"><i class="fa-solid fa-triangle-exclamation"></i> Gaps / Areas to Improve</h4>
+                        <ul class="result-list" id="match-gaps"></ul>
+                    </div>
+
+                    <!-- Matched Skills -->
+                    <div class="skills-tags-box glass-panel">
+                        <h4 class="box-title text-info"><i class="fa-solid fa-circle-nodes"></i> Matched Skills</h4>
+                        <div class="skill-tags-flex" id="match-skills-matched"></div>
+                    </div>
+
+                    <!-- Missing Skills -->
+                    <div class="skills-tags-box glass-panel">
+                        <h4 class="box-title text-danger"><i class="fa-solid fa-circle-minus"></i> Missing Skills</h4>
+                        <div class="skill-tags-flex" id="match-skills-missing"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- RIGHT MAIN PANEL: Candidate Portfolio Info and Recruiter Chat -->
+        <main class="main-content" id="main-content">
+            <!-- Candidate Title Card -->
+            <header class="candidate-header glass-panel">
+                <div class="candidate-meta">
+                    <h1 class="candidate-name" id="candidate-name">Thontadarya C</h1>
+                    <p class="candidate-title" id="candidate-title">Computer Science Engineer | Full-Stack Developer & AI Integrator</p>
+                    
+                    <div class="contact-grid">
+                        <a href="mailto:thontadarayacapt8073@gmail.com" class="contact-item" id="contact-email">
+                            <i class="fa-regular fa-envelope"></i> thontadarayacapt8073@gmail.com
+                        </a>
+                        <a href="tel:+917892650413" class="contact-item" id="contact-phone">
+                            <i class="fa-solid fa-phone"></i> +91 7892650413
+                        </a>
+                        <a href="https://www.linkedin.com/in/thontadarya-c-06a670251/" target="_blank" rel="noopener noreferrer" class="contact-item" id="contact-linkedin">
+                            <i class="fa-brands fa-linkedin"></i> LinkedIn
+                        </a>
+                        <span class="contact-item" id="contact-location">
+                            <i class="fa-solid fa-location-dot"></i> Chitradurga, Karnataka, India
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="summary-text" id="candidate-summary">
+                    Motivated Computer Science Engineering student with hands-on experience in Python, Java, C, and MySQL. Built AI-driven full-stack applications including an LLM-powered medical diagnostic chatbot and browser-based price comparison and recommendation tools. Eager to contribute as a Customer Success Engineer Trainee or Associate AI Engineer.
+                </div>
+            </header>
+
+            <!-- Navigation Tabs for Right Pane -->
+            <nav class="navigation-tabs glass-panel">
+                <button class="tab-btn active" data-tab="resume-panel" id="tab-resume">
+                    <i class="fa-regular fa-file-lines"></i> Professional Profile
+                </button>
+                <button class="tab-btn" data-tab="chat-panel" id="tab-chat">
+                    <i class="fa-regular fa-comments"></i> AI Recruiter Chat
+                </button>
+            </nav>
+
+            <!-- TABS CONTENT AREA -->
+            <div class="tabs-container">
+                <!-- Tab: Resume -->
+                <section id="resume-panel" class="tab-content active">
+                    <div class="resume-grid">
+                        <!-- Education and Projects -->
+                        <div class="resume-main-col">
+                            <!-- Education -->
+                            <div class="resume-section glass-panel">
+                                <h3 class="resume-section-heading"><i class="fa-solid fa-graduation-cap"></i> Education Details</h3>
+                                <div class="timeline" id="education-timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-date">2022 – 2026 (Passout)</div>
+                                        <h4 class="timeline-title">Bachelor of Engineering in Computer Science and Engineering</h4>
+                                        <p class="timeline-subtitle">S.J.M. Institute of Technology, Chitradurga, Karnataka</p>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-date">2019 – 2021</div>
+                                        <h4 class="timeline-title">Pre-University (Karnataka State Board)</h4>
+                                        <p class="timeline-subtitle">SJM Independent PU College, Chitradurga (79.66%)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Projects -->
+                            <div class="resume-section glass-panel">
+                                <h3 class="resume-section-heading"><i class="fa-solid fa-laptop-code"></i> Highlight Projects</h3>
+                                <div class="timeline" id="experience-timeline">
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-date">Final Year Project</div>
+                                        <h4 class="timeline-title">AI Medical Chat Bot (Full-Stack Developer)</h4>
+                                        <p class="timeline-subtitle">Python, Streamlit, LLM Integration</p>
+                                        <ul class="timeline-details">
+                                            <li>Developed full-stack application for diagnostic help using Python and Streamlit.</li>
+                                            <li>Integrated nearest-hospital locating features and automated report analyses.</li>
+                                            <li>Implemented image processing to analyze X-ray, MRI, and CT scans.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-date">Personal Project</div>
+                                        <h4 class="timeline-title">Smart Shopper Price Comparison Tool</h4>
+                                        <p class="timeline-subtitle">Chrome Extension, JavaScript, Web Scraping</p>
+                                        <ul class="timeline-details">
+                                            <li>Built extension comparing product pricing from Amazon to competitor sites in real time.</li>
+                                            <li>Programmed price-matching logic to identify deals for online shoppers.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-date">Personal Project</div>
+                                        <h4 class="timeline-title">YouTube Movie Recommendation Tool</h4>
+                                        <p class="timeline-subtitle">JavaScript, Chrome APIs, Gemini & YouTube Data API v3</p>
+                                        <ul class="timeline-details">
+                                            <li>Designed extension recommending films based on viewer language and view counts.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Side Column: Skill badging and credentials -->
+                        <div class="resume-side-col">
+                            <div class="resume-section glass-panel">
+                                <h3 class="resume-section-heading"><i class="fa-solid fa-screwdriver-wrench"></i> Technical Skills</h3>
+                                
+                                <div class="skill-category">
+                                    <h5 class="skill-cat-title"><i class="fa-solid fa-code"></i> Coding Languages</h5>
+                                    <div class="skill-tags" id="languages-tags">
+                                        <span class="skill-badge">Java (Core)</span>
+                                        <span class="skill-badge">C Language</span>
+                                        <span class="skill-badge">Python</span>
+                                        <span class="skill-badge">HTML / CSS</span>
+                                        <span class="skill-badge">SQL (MySQL)</span>
+                                    </div>
+                                </div>
+
+                                <div class="skill-category">
+                                    <h5 class="skill-cat-title"><i class="fa-solid fa-toolbox"></i> Tools & Platforms</h5>
+                                    <div class="skill-tags" id="tools-tags">
+                                        <span class="skill-badge">Streamlit</span>
+                                        <span class="skill-badge">Chrome Extension APIs</span>
+                                        <span class="skill-badge">FastAPI (Backend)</span>
+                                        <span class="skill-badge">MySQL Workbench</span>
+                                        <span class="skill-badge">Git & GitHub</span>
+                                    </div>
+                                </div>
+
+                                <div class="skill-category">
+                                    <h5 class="skill-cat-title"><i class="fa-solid fa-lightbulb"></i> Concepts & Soft Skills</h5>
+                                    <div class="skill-tags" id="concepts-tags">
+                                        <span class="skill-badge">Data Analysis</span>
+                                        <span class="skill-badge">AI/LLM Integrations</span>
+                                        <span class="skill-badge">Teamwork</span>
+                                        <span class="skill-badge">Problem Solving</span>
+                                        <span class="skill-badge">Effective Communication</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="resume-section glass-panel">
+                                <h3 class="resume-section-heading"><i class="fa-solid fa-award"></i> Certifications</h3>
+                                <div class="certs-list">
+                                    <div class="cert-item">
+                                        <i class="fa-solid fa-certificate"></i>
+                                        <div class="cert-info">
+                                            <span class="cert-name">Deloitte Data Analytics Simulation</span>
+                                            <span class="cert-meta">Forage • May 2026</span>
+                                        </div>
+                                    </div>
+                                    <div class="cert-item">
+                                        <i class="fa-solid fa-certificate"></i>
+                                        <div class="cert-info">
+                                            <span class="cert-name">Coursera Professional Certificates</span>
+                                            <span class="cert-meta">6 CS/DB Specializations</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: AI Chat -->
+                <section id="chat-panel" class="tab-content">
+                    <div class="chat-wrapper glass-panel">
+                        <div class="chat-header">
+                            <div class="chat-agent">
+                                <div class="agent-avatar"><i class="fa-solid fa-robot"></i></div>
+                                <div>
+                                    <h4 class="agent-name">Thontadarya's AI Assistant</h4>
+                                    <p class="agent-status"><span class="dot-online"></span> Represents Thontadarya C (Llama-3.3)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-body" id="chat-messages">
+                            <div class="message bot-message">
+                                <div class="message-content">
+                                    <p>Hello! I represent Thontadarya C. Ask me any details about his projects, coding background, or academic qualification matching your company's role!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick suggestions -->
+                        <div class="chat-suggestions">
+                            <div class="suggestions-list">
+                                <button class="suggest-btn">Explain your AI Medical Chat Bot project.</button>
+                                <button class="suggest-btn">What are your skills in Python and SQL?</button>
+                                <button class="suggest-btn">Are you available for Customer Success Engineer roles?</button>
+                            </div>
+                        </div>
+
+                        <form class="chat-input-row" id="chat-form">
+                            <input type="text" id="chat-input" placeholder="Type a question for the candidate agent..." required autocomplete="off">
+                            <button type="submit" class="chat-send-btn">
+                                <span>Send</span> <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="app-footer">
+                <p>© 2026 Thontadarya C. Powered by Groq AI and FastAPI.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- JS Logic -->
+    <script src="index.js"></script>
+</body>
+</html>
