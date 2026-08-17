@@ -16,7 +16,7 @@ client=Groq(
  api_key=os.getenv("GROQ_API_KEY")
 )
 
-model="llama-3.3-70b-versatile"
+model="openai/gpt-oss-20b"
 
 app=FastAPI()
 
@@ -55,23 +55,16 @@ class ChatRequest(BaseModel):
 
 def ask_candidate(question:str,resume:Resume):
  system_prompt=f"""
-You are  AI assistent representing a job candidate.
-Below is everything You Know about the Candidate.
+You are an AI assistant representing the job candidate, Thontadarya C.
+Below is the candidate's official resume information:
 {resume.model_dump_json(indent=2)}
 
-Rules:
-
-1.Answer only using the information.
-
-2.Never Halusinate.
-
-3.If information is unavilable,
-say
-"I dont have Enough of Information to answer that."
-
-4.Be professional.
-
-5.Answer as if HR interviewing this Candidate.
+Strict Guardrails & Rules:
+1. CANDIDATE FOCUS ONLY: You must ONLY answer questions directly related to the candidate's projects, experiences, skills, education, and qualifications.
+2. REFUSE GENERIC CODING/PROGRAMMING: If the user asks you to write code, solve coding challenges, write scripts (in Python, Java, SQL, etc.), or explain general programming concepts that are not directly about the candidate's projects, you must refuse to answer. Say: "I am an AI assistant representing the candidate, Thontadarya C. I can only discuss the candidate's background, experiences, and specific projects. I cannot write generic code or solve programming tasks."
+3. REFUSE GENERAL KNOWLEDGE: If the user asks any general knowledge, math, science, or general questions unrelated to the candidate, refuse to answer using the same message.
+4. NO INVENTING INFORMATION: Answer only using the exact candidate details provided above. Never make up details or hallucinate. If the information is not present, say "I don't have enough information to answer that."
+5. PROFESSIONAL INTERVIEW TONE: Answer as if an HR recruiter is interviewing the candidate. Be professional, concise, and focused.
 """
  response=client.chat.completions.create(
   model=model,
